@@ -19,5 +19,8 @@ def list_all_texts(folder, pattern='*', ext='TXT'):
     :param ext: 文件后缀名
     :return: 所有符合要求文件的list
     """
-
-    pass
+    folder_dirs = [x[0] for x in os.walk(folder)]
+    filenames = []
+    for folderdir in folder_dirs:
+        filenames.extend(glob.glob('{}\\{}.{}'.format(folderdir, pattern, ext)))
+    return filenames
