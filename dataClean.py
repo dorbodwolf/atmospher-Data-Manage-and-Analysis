@@ -26,13 +26,27 @@ ATMOS = [TEMPS, PRECS]
 
 
 
-def split_stations():
+def _post_processing(atmos):
     """
-    拆分站点
-    :return: 返回的站点数据集合
+    对合并后表格后处理
+    :return: 处理后的表格
     """
-    atmos_panda = combine_all_files()
-    pass
+    atmos.columns = ['year_month_day', 'stationID', 'maxDayTemp', 'minDayTemp', '_year_month_day', '_stationID',
+                     'accumPrec']
+    atmos['accumPrec_1'] = atmos['accumPrec']
+    atmos['accumPrec_1'] = pd.to_numeric(atmos['accumPrec_1'], errors='coerce')
+    for index, row in atmos.iterrows():
+        atmos.loc[index, 'maxDayTemp'] = row['maxDayTemp'] * 0.1
+        atmos.loc[index, 'minDayTemp'] = row['minDayTemp'] * 0.1
+        if row['accumPrec_1'] == 32700:
+            atmos.loc[index, 'accumPrec_1'] = 0
+        elif row['accumPrec_1'] >= 32000 and row['accumPrec_1'] < 32700:
+            atmos.loc[index, 'accumPrec_1'] = (row['accumPrec_1'] - 32000) * 0.1
+        elif row['accumPrec_1'] >= 31000 and row['accumPrec_1'] < 32000:
+            atmos.loc[index, 'accumPrec_1'] = (row['accumPrec_1'] - 31000) * 0.1
+        elif row['accumPrec_1'] >= 30000 and row['accumPrec_1'] < 31000:
+            atmos.loc[index, 'accumPrec_1'] = (row['accumPrec_1'] - 30000) * 0.1
+    return atmos
 
 
 
@@ -45,7 +59,7 @@ def combine_all_files():
     prec = pd.read_table(PRECS[0], sep='\s+', usecols=[0, 4, 5, 6, 9],
                          names=['stationID', 'year', 'month', 'day', 'accumPrec'],
                          dtype={'stationID': np.string0, 'accumPrec': np.int32}, parse_dates=[[1, 2, 3]])
-    atoms = pd.concat([temp, prec], axis=1)
+    atmos = pd.concat([temp, prec], axis=1)
     for i in range(len(ATMOS)): #2
         for j in range(1, len(ATMOS[i])): #48
             if i == 0:
@@ -59,6 +73,10 @@ def combine_all_files():
                                      names=['stationID', 'year', 'month', 'day', 'accumPrec'],
                                      dtype={'stationID': np.string0, 'accumPrec': np.int32}, parse_dates=[[1, 2, 3]])
                 prec = pd.concat([prec, prece])
-    atomse = pd.concat([temp, prec], axis=1)
-    atoms = pd.concat([atoms, atomse])
-    return atoms
+    atmose = pd.concat([temp, prec], axis=1)
+    atmos = pd.concat([atmos, atmose])
+    atmos = _post_processing(atmos)
+    return atmos
+
+if __name__ == '__main__':
+    atmos = combine_all_files()
