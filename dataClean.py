@@ -16,6 +16,8 @@ evapDir = '{}\\evaporation'.format(config.obsvDataDir)
 surfDir = '{}\\surfaceTemp'.format(config.obsvDataDir)
 windDir = '{}\\windSpeed'.format(config.obsvDataDir)
 
+resultDir = '{}'.format(config.resultDataDir)
+
 from util import *
 TEMPS = list_all_texts(tempDir)
 PRECS = list_all_texts(precDir)
@@ -23,7 +25,6 @@ EVAPS = list_all_texts(evapDir)
 SURFS = list_all_texts(surfDir)
 WINDS = list_all_texts(windDir)
 ATMOS = [TEMPS, PRECS]
-
 
 
 def _post_processing(atmos):
@@ -35,6 +36,13 @@ def _post_processing(atmos):
                      'accumPrec']
     atmos['accumPrec_1'] = atmos['accumPrec']
     atmos['accumPrec_1'] = pd.to_numeric(atmos['accumPrec_1'], errors='coerce')
+    atmos['year'] = atmos['year_month_day'].dt.year
+    atmos['month'] = atmos['year_month_day'].dt.month
+    atmos['day'] = atmos['year_month_day'].dt.day
+    cols = atmos.columns.tolist()
+    #print(cols)
+    cols = [cols[1]] + cols[-3:] + [cols[-4]] + cols[2:7] + [cols[0]]
+    atmos = atmos[cols]
     for index, row in atmos.iterrows():
         atmos.loc[index, 'maxDayTemp'] = row['maxDayTemp'] * 0.1
         atmos.loc[index, 'minDayTemp'] = row['minDayTemp'] * 0.1
@@ -46,6 +54,8 @@ def _post_processing(atmos):
             atmos.loc[index, 'accumPrec_1'] = (row['accumPrec_1'] - 31000) * 0.1
         elif row['accumPrec_1'] >= 30000 and row['accumPrec_1'] < 31000:
             atmos.loc[index, 'accumPrec_1'] = (row['accumPrec_1'] - 30000) * 0.1
+        if index > 50:
+            break
     return atmos
 
 
@@ -80,3 +90,4 @@ def combine_all_files():
 
 if __name__ == '__main__':
     atmos = combine_all_files()
+    atmos.to_csv('{}\\atmos.csv'.format(resultDir))
