@@ -7,7 +7,7 @@
 # @Software: PyCharm Community Edition
 # @Function: 基本的项目配置信息
 
-rootDir = 'E:\\atmosDataProcess'
+rootDir = 'P:\\atmosDataProcess'
 obsvDataDir = '{}\\DataSamples'.format(rootDir) #观测数据路径
 outDir = '{}\\tmp'.format(rootDir)
 resultDataDir = '{}\\Results'.format(rootDir)
